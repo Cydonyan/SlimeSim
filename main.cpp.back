@@ -1,0 +1,79 @@
+#include <SFML/Graphics.hpp>
+#include <cmath>
+#include <iostream>
+#define _USE_MATH_DEFINES
+
+class Agent 
+{
+    public:
+    float x, y, vx, vy;
+    Agent()
+    {
+        x = 0;
+        y = 0;
+        vx = 0;
+        vy = 0;
+    }
+    Agent(float initial_x, float initial_y, float initial_vx, float initial_vy)
+    {
+        x = initial_x;
+        y = initial_y;
+        vx = initial_vx;
+        vy = initial_vy;
+    }
+
+    void move(int windowWidth, int windowHeight)
+    {
+        if ((x > windowWidth) || (x < 0))
+        {
+            vx = -vx;
+        }
+        if ((y > windowWidth) || (y < 0))
+        {
+            vy = -vy;
+        }
+
+        x += vx;
+        y += vy;
+    }
+
+    sf::CircleShape draw()
+    {
+        sf::CircleShape body(1.f);
+        body.move(x,y);
+        return body;
+    }
+};
+
+int main()
+{
+    int windowWidth = 400, windowHeight = 400;
+    sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "SFML works!");
+    Agent agents[10];
+
+    for (int i =0; i < 10; i++)
+    {
+        agents[i] = Agent(rand()%windowWidth, rand()%windowHeight, (((double) rand() / (RAND_MAX)) * 2 - 1)/4, (((double) rand() / (RAND_MAX)) * 2 - 1)/4);
+    }
+
+    while (window.isOpen())
+    {
+        sf::Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                window.close();
+        }
+
+        window.clear();
+        for (int i = 0; i < 10; i++)
+        {
+            agents[i].move(windowWidth, windowHeight);
+            window.draw(agents[i].draw());
+        }
+        window.display();
+    }
+
+    return 0;
+}
+
