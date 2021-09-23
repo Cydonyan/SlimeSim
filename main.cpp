@@ -5,6 +5,14 @@
 #include <vector>
 #define _USE_MATH_DEFINES
 
+// Preferences
+
+const int windowWidth = 1000, windowHeight = 1000;
+const int AGENTS_NUMBER = 500;
+const int SENSOR_LENGTH = 10;
+const double angle = M_PI/4;
+const int EDGE_L = 10;
+
 class Agent 
 {
     public:
@@ -28,11 +36,11 @@ class Agent
 
     void move(int windowWidth, int windowHeight)
     {
-        if ((x > windowWidth - 5) || (x < 5))
+        if ((x > windowWidth - EDGE_L) || (x < EDGE_L))
         {
             vx = -vx;
         }
-        if ((y > windowHeight - 5) || (y < 5))
+        if ((y > windowHeight - EDGE_L) || (y < EDGE_L))
         {
             vy = -vy;
         }
@@ -74,8 +82,6 @@ void setPixels(sf::Texture& texture, std::vector<std::vector<int>>& buffer, sf::
 int main()
 {
     int itercounter = 0;
-    int windowWidth = 1000, windowHeight = 1000;
-    int AGENTS_NUMBER = 500;
 
     sf::Color COLOR_WHITE(255,255,255,255);
 
