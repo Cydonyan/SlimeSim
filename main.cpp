@@ -5,13 +5,38 @@
 #include <vector>
 #define _USE_MATH_DEFINES
 
-// Preferences
+// Preferences and preparations
 
 const int windowWidth = 1000, windowHeight = 1000;
 const int AGENTS_NUMBER = 500;
 const int SENSOR_LENGTH = 10;
-const double angle = M_PI/4;
-const int EDGE_L = 10;
+const double SENSOR_ANGLE = M_PI/4;
+const int EDGE_L = 5;
+
+void setPixels(sf::Image& image, std::vector<std::vector<int>>& buffer, sf::Color color){
+    for (int i = 0; i < buffer.size(); i++)
+    {
+        if ((0 < buffer.at(i).at(0) < image.getSize().x) && (0 < buffer.at(i).at(1) < image.getSize().y))
+        {
+            image.setPixel(buffer.at(i).at(0), buffer.at(i).at(1), color);
+            //std::cout << "Error is not here\n";
+        }
+    }
+    buffer.clear();
+} 
+
+sf::Color getPixelColor(sf::Image image, int x, int y){
+    if ((0 < x < image.getSize().x) && (0 < y < image.getSize().y))
+    {
+        std::cout << "Error is here\n";
+        std::cout << x << " " << y << "\n";
+        return image.getPixel(x,y);
+    }
+    else
+    {
+        return sf::Color(0,0,0);
+    }
+}
 
 //Agent class
 
@@ -19,7 +44,7 @@ class Agent
 {
     public:
     double x, y, vx, vy;
-    double angle = M_PI/6;
+    double a = SENSOR_ANGLE;
 
     Agent()
     {
@@ -51,9 +76,51 @@ class Agent
         y += vy;
     }
 
-    void search()
+    void search(sf::Image& image)
     {
+        float lx, ly, srx, sry, slx, sly;
+        sf::Color csl, csr, csc;
+        float cvl, cvr, cvc;
 
+        lx = SENSOR_LENGTH * vx / (pow(2, vx) + pow(2, vy));
+        ly = SENSOR_LENGTH * vy / (pow(2, vx) + pow(2, vy));
+
+        slx = int(x + lx*cos(a) - ly*sin(a));
+        sly = int(y + ly*cos(a) + lx*sin(a));
+
+        srx = int(x + lx*cos(-a) - ly*sin(-a));
+        sry = int(y + ly*cos(-a) + lx*sin(-a));
+
+        std::cout << "If you won't see next line you're fucked\n";
+        csl = getPixelColor(image, slx, sly);
+        csr = getPixelColor(image, srx, sry);
+        csc = getPixelColor(image, lx, ly);
+
+        std::cout << "It's OK\n";
+
+        cvl = (csl.r + csl.g + csl.b)/3;
+        cvr = (csr.r + csr.g + csr.b)/3;
+        cvc = (csc.r + csc.g + csc.b)/3;
+
+        if (cvl == cvr)
+        {
+            //turn randomly
+        }
+        else
+        { if (cvl > cvl )
+            {
+                vx = vx*cos(-a) - vy*sin(-a);
+                vy = vy*cos(-a) + vx*sin(-a);
+            }
+        else
+        {   if (cvl < cvl )
+        {
+                vx = vx*cos(a) - vy*sin(a);
+                vy = vy*cos(a) + vx*sin(a);
+            }   
+        }
+        }
+                
     }
 
     sf::CircleShape draw()
@@ -63,23 +130,6 @@ class Agent
         return body;
     }
 };
-
-void setPixels(sf::Texture& texture, std::vector<std::vector<int>>& buffer, sf::Color color){
-    sf::Image image = texture.copyToImage();
-
-    for (int i = 0; i < buffer.size(); i++)
-    {
-        image.setPixel(buffer.at(i).at(0), buffer.at(i).at(1), color);
-    }
-    //image.setPixel(i.at(0), i.at(0), color);
-    texture.loadFromImage(image);
-    buffer.clear();
-} 
-
-/* sf::Color getPixelColor(sf::Texture& texture, int x, int y){
-    sf::Image image = texture.copyToImage();
-    return image.getPixel(x,y);
-} */
 
 // Main function
 
@@ -94,8 +144,8 @@ int main()
 
     std::vector<std::vector<int>> PixelBuffer;
     
-    sf::Texture MTexture;
-    MTexture.create(windowWidth, windowHeight);
+    sf::Image MImage;
+    MImage.create(windowWidth, windowHeight);
 
     srand(time(0));
 
@@ -117,12 +167,15 @@ int main()
         window.clear();
         for (int i = 0; i < AGENTS_NUMBER; i++)
         {
+            agents.at(i).search(MImage);
             agents.at(i).move(windowWidth, windowHeight);
             PixelBuffer.push_back({((int) agents.at(i).x), ((int) agents.at(i).y)});
         }
 
-        setPixels(MTexture, PixelBuffer, COLOR_WHITE);
+        setPixels(MImage, PixelBuffer, COLOR_WHITE);
         
+        sf::Texture MTexture;
+        MTexture.loadFromImage(MImage); 
         sf::Sprite sprite(MTexture);
         window.draw(sprite);
         window.display();
