@@ -13,6 +13,8 @@ const int SENSOR_LENGTH = 10;
 const double angle = M_PI/4;
 const int EDGE_L = 10;
 
+//Agent class
+
 class Agent 
 {
     public:
@@ -78,6 +80,8 @@ void setPixels(sf::Texture& texture, std::vector<std::vector<int>>& buffer, sf::
     sf::Image image = texture.copyToImage();
     return image.getPixel(x,y);
 } */
+
+// Main function
 
 int main()
 {
