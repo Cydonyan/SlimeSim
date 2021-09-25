@@ -7,16 +7,23 @@
 
 // Preferences and preparations
 
-const int windowWidth = 1000, windowHeight = 1000;
-const int AGENTS_NUMBER = 500;
-const int SENSOR_LENGTH = 10;
+const int windowWidth = 200, windowHeight = 200;
+const int AGENTS_NUMBER = 30;
+const int SENSOR_LENGTH = 4; // MUST be greater than SENSOR_SIZE
+const int SENSOR_SIZE = 2; //MUST be even
 const double SENSOR_ANGLE = M_PI/4;
 const int EDGE_L = 5;
+const double TURN_ANGLE = SENSOR_ANGLE;
+const int EVAPO_RATE = 2;
+
+const sf::Color COLOR_WHITE(255,255,255);
+const sf::Color COLOR_GREEN(0,255,0,128);
+
 
 void setPixels(sf::Image& image, std::vector<std::vector<int>>& buffer, sf::Color color){
     for (int i = 0; i < buffer.size(); i++)
     {
-        if ((0 < buffer.at(i).at(0) < image.getSize().x) && (0 < buffer.at(i).at(1) < image.getSize().y))
+        if ((buffer.at(i).at(0) < image.getSize().x) && (buffer.at(i).at(0) > 0) && (buffer.at(i).at(1) < image.getSize().y) && (buffer.at(i).at(1) > 0))
         {
             image.setPixel(buffer.at(i).at(0), buffer.at(i).at(1), color);
             //std::cout << "Error is not here\n";
@@ -25,11 +32,21 @@ void setPixels(sf::Image& image, std::vector<std::vector<int>>& buffer, sf::Colo
     buffer.clear();
 } 
 
-sf::Color getPixelColor(sf::Image image, int x, int y){
-    if ((0 < x < image.getSize().x) && (0 < y < image.getSize().y))
+void evaporateImage(sf::Image& img){
+    for (int i = 0; i < img.getSize().x; i++)
     {
-        std::cout << "Error is here\n";
-        std::cout << x << " " << y << "\n";
+        for (int j = 0; j < img.getSize().y; j++)
+        {
+            sf::Color c = img.getPixel(i,j);
+            c = sf::Color(c.r - (c.r >= EVAPO_RATE) * EVAPO_RATE, c.g - (c.g >= EVAPO_RATE) * EVAPO_RATE, c.b - (c.b >= EVAPO_RATE) * EVAPO_RATE);
+            img.setPixel(i,j,c);
+        }
+    }
+}
+
+sf::Color getPixelColor(sf::Image image, int x, int y){
+    if ((x < image.getSize().x) && (x > 0) && (y < image.getSize().y) && y > 0)
+    {
         return image.getPixel(x,y);
     }
     else
@@ -38,13 +55,33 @@ sf::Color getPixelColor(sf::Image image, int x, int y){
     }
 }
 
+float getAvAreaValue(sf::Image image, int x, int y, int a){
+    int avg = 0;
+    for (int i = -a/2; i < a/2; i++){
+        for (int j = -a/2; j < a/2; j++){
+            avg += getPixelColor(image, x + i, y + j).r;
+
+            /*if ((x+i < image.getSize().x) && (x+i > 0) && (y+j < image.getSize().y) && (y+j > 0)){
+                //std::cout << x + i << " " << y + j << " " << image.getSize().x << " " << image.getSize().y << "\n";
+                image.setPixel(x+i, y+j, COLOR_GREEN);
+            }*/
+        }
+    }
+    /*std::vector<std::vector<int>> dbgbox = {{x - a/2, y - a/2},{x - a/2, y + a/2},{x + a/2, y - a/2},{x + a/2, y + a/2}};
+
+    std::cout << x - a/2 << " " << y - a/2 << "\n";
+    setPixels(image, dbgbox, COLOR_WHITE);*/
+
+    return avg/pow(a,2);
+}
+
 //Agent class
 
 class Agent 
 {
     public:
     double x, y, vx, vy;
-    double a = SENSOR_ANGLE;
+    int bcounter = 0;
 
     Agent()
     {
@@ -78,57 +115,53 @@ class Agent
 
     void search(sf::Image& image)
     {
-        float lx, ly, srx, sry, slx, sly;
-        sf::Color csl, csr, csc;
-        float cvl, cvr, cvc;
+        int lx, ly, srx, sry, slx, sly;
+        float cvl, cvr;
 
-        lx = SENSOR_LENGTH * vx / (pow(2, vx) + pow(2, vy));
-        ly = SENSOR_LENGTH * vy / (pow(2, vx) + pow(2, vy));
+        lx = SENSOR_LENGTH * vx / sqrt(pow(vx, 2) + pow(vy, 2));
+        ly = SENSOR_LENGTH * vy / sqrt(pow(vx, 2) + pow(vy, 2));
+        //std::cout << sqrt(pow(lx,2) + pow(ly,2)) << "\n";
+        //std::cout << lx << " " << ly << "\n";
 
-        slx = int(x + lx*cos(a) - ly*sin(a));
-        sly = int(y + ly*cos(a) + lx*sin(a));
+        slx = int(x + lx*cos(SENSOR_ANGLE) - ly*sin(SENSOR_ANGLE));
+        sly = int(y + ly*cos(SENSOR_ANGLE) + lx*sin(SENSOR_ANGLE));
 
-        srx = int(x + lx*cos(-a) - ly*sin(-a));
-        sry = int(y + ly*cos(-a) + lx*sin(-a));
+        srx = int(x + lx*cos(-SENSOR_ANGLE) - ly*sin(-SENSOR_ANGLE));
+        sry = int(y + ly*cos(-SENSOR_ANGLE) + lx*sin(-SENSOR_ANGLE));
 
-        std::cout << "If you won't see next line you're fucked\n";
-        csl = getPixelColor(image, slx, sly);
-        csr = getPixelColor(image, srx, sry);
-        csc = getPixelColor(image, lx, ly);
+        /*std::vector <std::vector<int>> dbgpixls =  {{slx, sly}, {srx, sry}};
+        setPixels(image, dbgpixls, COLOR_GREEN);*/
 
-        std::cout << "It's OK\n";
+        cvl = getAvAreaValue(image, slx, sly, SENSOR_SIZE);
+        cvr = getAvAreaValue(image, srx, sry, SENSOR_SIZE);
 
-        cvl = (csl.r + csl.g + csl.b)/3;
-        cvr = (csr.r + csr.g + csr.b)/3;
-        cvc = (csc.r + csc.g + csc.b)/3;
-
-        if (cvl == cvr)
+        if ((cvl == cvr) && (cvl*cvr !=0))
         {
-            //turn randomly
+            srand(time(0));
+            int rsd = int(2*rand()/RAND_MAX - 1);
+
+            vx = vx*cos(rsd*TURN_ANGLE) - vy*sin(rsd*TURN_ANGLE);
+            vy = vy*cos(rsd*TURN_ANGLE) + vx*sin(rsd*TURN_ANGLE);
         }
         else
-        { if (cvl > cvl )
+        { if (cvl < cvr )
             {
-                vx = vx*cos(-a) - vy*sin(-a);
-                vy = vy*cos(-a) + vx*sin(-a);
+                vx = vx*cos(-TURN_ANGLE) - vy*sin(-TURN_ANGLE);
+                vy = vy*cos(-TURN_ANGLE) + vx*sin(-TURN_ANGLE);
             }
         else
-        {   if (cvl < cvl )
+        {   if (cvl > cvr )
         {
-                vx = vx*cos(a) - vy*sin(a);
-                vy = vy*cos(a) + vx*sin(a);
+                vx = (vx*cos(TURN_ANGLE) - vy*sin(TURN_ANGLE)) * vx / sqrt(pow(vx,2) + pow(vy,2));
+                vy = (vy*cos(TURN_ANGLE) + vx*sin(TURN_ANGLE)) * vx / sqrt(pow(vx,2) + pow(vy,2));
             }   
         }
         }
-                
+        
+        /*vx += vx* (abs(vx) < 1) * 0.1;
+        vy += vy* (abs(vy) < 1) * 0.1;*/
     }
 
-    sf::CircleShape draw()
-    {
-        sf::CircleShape body(1.f);
-        body.move(x,y);
-        return body;
-    }
 };
 
 // Main function
@@ -136,8 +169,6 @@ class Agent
 int main()
 {
     int itercounter = 0;
-
-    sf::Color COLOR_WHITE(255,255,255,255);
 
     sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "SFML works!");
     std::vector<Agent> agents;
@@ -172,6 +203,7 @@ int main()
             PixelBuffer.push_back({((int) agents.at(i).x), ((int) agents.at(i).y)});
         }
 
+        evaporateImage(MImage);
         setPixels(MImage, PixelBuffer, COLOR_WHITE);
         
         sf::Texture MTexture;
