@@ -8,7 +8,7 @@
 // Preferences and preparations
 
 const int windowWidth = 200, windowHeight = 200;
-const int AGENTS_NUMBER = 30;
+const int AGENTS_NUMBER = 100;
 const int SENSOR_LENGTH = 4; // MUST be greater than SENSOR_SIZE
 const int SENSOR_SIZE = 2; //MUST be even
 const double SENSOR_ANGLE = M_PI/4;

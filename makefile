@@ -3,5 +3,9 @@ build: main.cpp
 	g++ -c main.cpp
 	rm -f app
 	g++ main.o -o app -lsfml-graphics -lsfml-window -lsfml-system
+
 run: build
 	./app
+
+install-dependencies:
+	sudo apt install libsfml-dev
