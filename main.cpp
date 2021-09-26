@@ -169,6 +169,7 @@ class Agent
 int main()
 {
     int itercounter = 0;
+    float temperature = 0;
 
     sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "SFML works!");
     std::vector<Agent> agents;
@@ -201,7 +202,11 @@ int main()
             agents.at(i).search(MImage);
             agents.at(i).move(windowWidth, windowHeight);
             PixelBuffer.push_back({((int) agents.at(i).x), ((int) agents.at(i).y)});
+            temperature += sqrt(pow(agents.at(i).vx,2) + pow(agents.at(i).vy,2));
         }
+
+        std::cout << float(temperature / AGENTS_NUMBER) << "\n";
+        temperature = 0;
 
         evaporateImage(MImage);
         setPixels(MImage, PixelBuffer, COLOR_WHITE);
