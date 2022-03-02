@@ -15,8 +15,8 @@ const int SENSOR_SIZE = 2; //MUST be even
 const double SENSOR_ANGLE = M_PI/4;
 const int EDGE_L = 5;
 const double TURN_ANGLE = M_PI/8;
-const int TURN_RAND = 2;
-const int EVAPO_RATE = 1;
+const float TURN_RAND = 2.5;
+const float EVAPO_RATE = 1.25;
 
 const sf::Color COLOR_WHITE(255,255,255);
 const sf::Color COLOR_GREEN(0,255,0,128);
@@ -77,7 +77,8 @@ float getAvAreaValue(sf::Image& image, int x, int y, int a){
     int avg = 0;
     for (int i = -a/2; i <= a/2; i++){
         for (int j = -a/2; j <= a/2; j++){
-            avg = avg + int(getPixelColor(image, x + i, y + j).r);
+            sf::Color colr = getPixelColor(image, x + i, y + j);
+            avg = avg + (colr.r + colr.g + colr.b)/3;
 
             // if ((x+i < image.getSize().x) && (x+i > 0) && (y+j < image.getSize().y) && (y+j > 0)){
             //     //std::cout << x + i << " " << y + j << " " << image.getSize().x << " " << image.getSize().y << "\n";
@@ -193,10 +194,11 @@ int main()
     sf::Image MImage;
     MImage.create(windowWidth, windowHeight);
 
+    int const c_r = 100;
 
     for (int i =0; i < AGENTS_NUMBER; i++)
     {
-        agents.push_back(Agent(randomValue(EDGE_L,windowWidth - EDGE_L, true), randomValue(EDGE_L,windowHeight - EDGE_L, true), randomValue(), randomValue()));
+        agents.push_back(Agent(windowWidth / 2 + c_r*sin(2*M_PI*i/AGENTS_NUMBER),windowHeight/2 + c_r*cos(2*M_PI*i/AGENTS_NUMBER),randomValue(), randomValue()));
         
     }
 
