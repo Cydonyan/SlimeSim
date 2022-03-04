@@ -10,15 +10,15 @@
 
 // Preferences and prepaconstrations
 
-const int windowWidth = 400, windowHeight = 400;
+const int windowWidth = 600, windowHeight = 600;
 const int AGENTS_NUMBER = 1000;
 const int AGENT_SPEED = 1;
 const int SENSOR_LENGTH = 7; // MUST be greater than SENSOR_SIZE
 const int SENSOR_SIZE = 2; //MUST be even
 const double SENSOR_ANGLE = M_PI/4;
-const int EDGE_L = windowHeight*0.05;
+const int EDGE_L = windowHeight*0.01;
 const double TURN_ANGLE = M_PI/8;
-const float TURN_RAND = 2.5;
+const float TURN_RAND = 1;
 const float EVAPO_RATE = 1;
 
 const sf::Color COLOR_WHITE(255,255,255);
@@ -81,12 +81,19 @@ class Agent
             vy -= vy;
         }
         
-        
-        float pvx = vx, pvy = vy;
+        if (sqrt(pow(vx,2) + pow(vy,2)) <= 0.1)
+        {
+            vx = randomValue();
+            vy = randomValue();
+        }
+        else
+        {
+            float pvx = vx, pvy = vy;
         int rsd = randomValue()*TURN_RAND;
 
         vx = pvx*cos(rsd*TURN_ANGLE) - pvy*sin(rsd*TURN_ANGLE);
         vy = pvy*cos(rsd*TURN_ANGLE) + pvx*sin(rsd*TURN_ANGLE);
+        }
 
         x += vx;
         y += vy;
@@ -114,7 +121,7 @@ class Agent
         if ((cvl == cvr) && (cvl*cvr !=0))
         {
             
-            int rsd = randomValue()*TURN_RAND;
+            int rsd = randomValue();
 
             vx = pvx*cos(rsd*TURN_ANGLE) - pvy*sin(rsd*TURN_ANGLE);
             vy = pvy*cos(rsd*TURN_ANGLE) + pvx*sin(rsd*TURN_ANGLE);
@@ -154,7 +161,7 @@ class Swarm
         agentCounter = 0;
     }
 
-    Swarm(int ix,int iy, int agNum, sf::Color color, int sz = windowHeight*0.25)
+    Swarm(int ix,int iy, int agNum, sf::Color color, int sz = windowHeight*0.1)
     {
         x = ix;
         y = iy;
@@ -189,14 +196,15 @@ int main()
 {
     int itercounter = 0;
 
-    sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "ITS ALIIIIVE!");
+    sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "ITS ALIIIIVE!"); //, sf::Style::Fullscreen
     std::vector<Agent> agents;
     
     sf::Image MImage;
     MImage.create(windowWidth, windowHeight);
 
-    Swarm Swarm_1 = Swarm(windowWidth*3/4, windowHeight*3/4, AGENTS_NUMBER/2, sf::Color(255,255,255));
-    Swarm Swarm_2 = Swarm(windowWidth/4, windowHeight/4, AGENTS_NUMBER/2, sf::Color(1,255,1));
+    Swarm Swarm_1 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/2, sf::Color(1,255,1), windowHeight/6);
+    Swarm Swarm_2 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/2, sf::Color(1,1,255), windowHeight/4);
+    Swarm Swarm_3 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/2, sf::Color(255,1,1), windowHeight/2 - 50);
 
     while (window.isOpen())
     {
@@ -212,8 +220,10 @@ int main()
         
         std::thread S1(&Swarm::act, &Swarm_1, std::ref(MImage));
         std::thread S2(&Swarm::act, &Swarm_2, std::ref(MImage));
+        std::thread S3(&Swarm::act, &Swarm_3, std::ref(MImage));
         S1.join();
         S2.join();
+        S3.join();
 
         //Swarm_1.act(MImage);
         //Swarm_2.act(MImage);
@@ -257,13 +267,16 @@ void setPixels(sf::Image& image, std::vector<std::vector<int>>& buffer, sf::Colo
 } 
 
 void evaporateImage(sf::Image& img){
-    for (int i = 0; i < img.getSize().x; i++)
+    for (int i = 1; i < img.getSize().x - 1; i++)
     {
-        for (int j = 0; j < img.getSize().y; j++)
+        for (int j = 1; j < img.getSize().y - 1; j++)
         {
             sf::Color c = img.getPixel(i,j);
-            c = sf::Color(c.r - (c.r >= EVAPO_RATE) * EVAPO_RATE, c.g - (c.g >= EVAPO_RATE) * EVAPO_RATE, c.b - (c.b >= EVAPO_RATE) * EVAPO_RATE);
-            img.setPixel(i,j,c);
+            if (c != sf::Color(0,0,0))
+            {
+                c = sf::Color(c.r - (c.r >= EVAPO_RATE) * EVAPO_RATE, c.g - (c.g >= EVAPO_RATE) * EVAPO_RATE, c.b - (c.b >= EVAPO_RATE) * EVAPO_RATE);
+                img.setPixel(i,j,c);
+            }
         }
     }
 }
