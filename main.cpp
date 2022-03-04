@@ -5,23 +5,23 @@
 #include <vector>
 #include <random>
 #include <execution>
+#include <thread>
 #define _USE_MATH_DEFINES
 
 // Preferences and prepaconstrations
 
-const int windowWidth = 640, windowHeight = 480;
-const int AGENTS_NUMBER = 10000;
+const int windowWidth = 400, windowHeight = 400;
+const int AGENTS_NUMBER = 1000;
 const int AGENT_SPEED = 1;
 const int SENSOR_LENGTH = 7; // MUST be greater than SENSOR_SIZE
 const int SENSOR_SIZE = 2; //MUST be even
 const double SENSOR_ANGLE = M_PI/4;
 const int EDGE_L = windowHeight*0.05;
 const double TURN_ANGLE = M_PI/8;
-const float TURN_RAND = 2;
+const float TURN_RAND = 2.5;
 const float EVAPO_RATE = 1;
 
 const sf::Color COLOR_WHITE(255,255,255);
-const sf::Color COLOR_GREEN(0,255,0,128);
 
 static std::default_random_engine e;
 static std::uniform_real_distribution<> dis(0, 1);
@@ -62,17 +62,17 @@ class Agent
     {
         if (x > windowWidth - EDGE_L)
         {
-            x = windowWidth - EDGE_L - 1;
+            x = windowWidth - EDGE_L - 10;
             vx -= vx;
         }
         if  (x < EDGE_L)
         {
-            x = EDGE_L + 1;
+            x = EDGE_L + 10;
             vx -= vx;
         }
         if (y > windowHeight - EDGE_L)
         {
-            y = windowHeight - EDGE_L - 1;
+            y = windowHeight - EDGE_L - 10;
             vy -= vy;
         }
         if  (y < EDGE_L)
@@ -164,7 +164,7 @@ class Swarm
 
         for (int i =0; i < agentCounter; i++)
         {
-            agents.push_back(Agent(x + sin(2*M_PI*i/agentCounter)*size/2,y + cos(2*M_PI*i/agentCounter)*size/2, AGENT_SPEED*randomValue(), AGENT_SPEED*randomValue()));
+            agents.push_back(Agent(x + randomValue(0,1,true)*sin(2*M_PI*i/agentCounter)*size/2,y + randomValue(0,1,true)*cos(2*M_PI*i/agentCounter)*size/2, AGENT_SPEED*randomValue(), AGENT_SPEED*randomValue()));
         }
 
     }
@@ -210,8 +210,13 @@ int main()
         window.clear();
         evaporateImage(MImage);
         
-        Swarm_1.act(MImage);
-        Swarm_2.act(MImage);
+        std::thread S1(&Swarm::act, &Swarm_1, std::ref(MImage));
+        std::thread S2(&Swarm::act, &Swarm_2, std::ref(MImage));
+        S1.join();
+        S2.join();
+
+        //Swarm_1.act(MImage);
+        //Swarm_2.act(MImage);
         
         sf::Texture MTexture;
         MTexture.loadFromImage(MImage); 
@@ -240,13 +245,14 @@ float randomValue(float min, float max, bool allowMiddle)
 }
 
 void setPixels(sf::Image& image, std::vector<std::vector<int>>& buffer, sf::Color color){
-    for (int i = 0; i < buffer.size(); i++)
-    {
-        if ((buffer.at(i).at(0) < image.getSize().x) && (buffer.at(i).at(0) > 0) && (buffer.at(i).at(1) < image.getSize().y) && (buffer.at(i).at(1) > 0))
+    std::for_each(std::execution::par, buffer.begin(), buffer.end(), [&](auto& pixl)
         {
-            image.setPixel(buffer.at(i).at(0), buffer.at(i).at(1), color);
-        }
-    }
+            if ((pixl.at(0) < image.getSize().x) && (pixl.at(0) > 0) && (pixl.at(1) < image.getSize().y) && (pixl.at(1) > 0))
+            {
+                image.setPixel(pixl.at(0), pixl.at(1), color);
+            }
+        });
+
     buffer.clear();
 } 
 
