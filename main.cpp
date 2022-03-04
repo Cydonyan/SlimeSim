@@ -1,7 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <cmath>
 #include <iostream>
-#include <time.h>
 #include <vector>
 #include <random>
 #include <execution>
@@ -10,15 +9,15 @@
 
 // Preferences and prepaconstrations
 
-const int windowWidth = 600, windowHeight = 600;
-const int AGENTS_NUMBER = 1000;
+const int windowWidth = 1920, windowHeight = 1080;
+const int AGENTS_NUMBER = 50000;
 const int AGENT_SPEED = 1;
-const int SENSOR_LENGTH = 7; // MUST be greater than SENSOR_SIZE
+const int SENSOR_LENGTH = 6; // MUST be greater than SENSOR_SIZE
 const int SENSOR_SIZE = 2; //MUST be even
 const double SENSOR_ANGLE = M_PI/4;
 const int EDGE_L = windowHeight*0.01;
 const double TURN_ANGLE = M_PI/8;
-const float TURN_RAND = 1;
+const float TURN_RAND = 0;
 const float EVAPO_RATE = 0.997;
 
 const sf::Color COLOR_WHITE(255,255,255);
@@ -88,7 +87,7 @@ class Agent
             vy -= vy;
         }
         
-        if (sqrt(pow(vx,2) + pow(vy,2)) <= 0.1)
+        if (sqrt(pow(vx,2) + pow(vy,2)) <= 0.5)
         {
             vx = randomValue();
             vy = randomValue();
@@ -203,7 +202,7 @@ int main()
 {
     int itercounter = 0;
 
-    sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "ITS ALIIIIVE!"); //, sf::Style::Fullscreen
+    sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "ITS ALIIIIVE!"); //sf::Style::Fullscreen
     std::vector<Agent> agents;
     
     sf::Image MImage;
