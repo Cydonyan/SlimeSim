@@ -4,18 +4,20 @@
 #include <time.h>
 #include <vector>
 #include <random>
+#include <execution>
 #define _USE_MATH_DEFINES
 
 // Preferences and prepaconstrations
 
-const int windowWidth = 400, windowHeight = 400;
-const int AGENTS_NUMBER = 5000;
+const int windowWidth = 640, windowHeight = 480;
+const int AGENTS_NUMBER = 10000;
+const int AGENT_SPEED = 1;
 const int SENSOR_LENGTH = 7; // MUST be greater than SENSOR_SIZE
 const int SENSOR_SIZE = 2; //MUST be even
 const double SENSOR_ANGLE = M_PI/4;
-const int EDGE_L = 5;
+const int EDGE_L = windowHeight*0.05;
 const double TURN_ANGLE = M_PI/8;
-const float TURN_RAND = 1.5;
+const float TURN_RAND = 2;
 const float EVAPO_RATE = 1;
 
 const sf::Color COLOR_WHITE(255,255,255);
@@ -58,14 +60,27 @@ class Agent
 
     void move(int windowWidth, int windowHeight)
     {
-        if ((x > windowWidth - EDGE_L) || (x < EDGE_L))
+        if (x > windowWidth - EDGE_L)
         {
-            vx = -vx;
+            x = windowWidth - EDGE_L - 1;
+            vx -= vx;
         }
-        if ((y > windowHeight - EDGE_L) || (y < EDGE_L))
+        if  (x < EDGE_L)
         {
-            vy = -vy;
+            x = EDGE_L + 1;
+            vx -= vx;
         }
+        if (y > windowHeight - EDGE_L)
+        {
+            y = windowHeight - EDGE_L - 1;
+            vy -= vy;
+        }
+        if  (y < EDGE_L)
+        {
+            y = EDGE_L + 1;
+            vy -= vy;
+        }
+        
         
         float pvx = vx, pvy = vy;
         int rsd = randomValue()*TURN_RAND;
@@ -128,7 +143,7 @@ class Swarm
     public:
     int x, y;
     int agentCounter;
-    const int size = windowHeight*0.25;
+    int size;
     std::vector<Agent> agents;
     sf::Color swarmColor;
 
@@ -139,29 +154,33 @@ class Swarm
         agentCounter = 0;
     }
 
-    Swarm(int ix,int iy, int agNum, sf::Color color)
+    Swarm(int ix,int iy, int agNum, sf::Color color, int sz = windowHeight*0.25)
     {
         x = ix;
         y = iy;
         agentCounter = agNum;
         swarmColor = color;
+        size = sz;
 
         for (int i =0; i < agentCounter; i++)
         {
-            agents.push_back(Agent(x + sin(2*M_PI*i/agentCounter)*size/2,y + cos(2*M_PI*i/agentCounter)*size/2, randomValue(), randomValue()));
+            agents.push_back(Agent(x + sin(2*M_PI*i/agentCounter)*size/2,y + cos(2*M_PI*i/agentCounter)*size/2, AGENT_SPEED*randomValue(), AGENT_SPEED*randomValue()));
         }
+
     }
 
     void act(sf::Image& img)
     {
         std::vector<std::vector<int>> PixelBuffer;
-        for (int i = 0; i < agentCounter; i++)
+        std::for_each(std::execution::par, agents.begin(), agents.end(), [&](Agent& agent)
         {
-            agents.at(i).search(img, swarmColor);
-            agents.at(i).move(windowWidth, windowHeight);
-            PixelBuffer.push_back({((int) agents.at(i).x), ((int) agents.at(i).y)});
-            setPixels(img, PixelBuffer, swarmColor);
-        }
+            agent.search(img,swarmColor);
+            agent.move(windowWidth,windowHeight);
+            PixelBuffer.push_back({((int) agent.x), ((int) agent.y)});
+        });
+
+        setPixels(img, PixelBuffer, swarmColor);
+
     }
     
 };
@@ -177,7 +196,7 @@ int main()
     MImage.create(windowWidth, windowHeight);
 
     Swarm Swarm_1 = Swarm(windowWidth*3/4, windowHeight*3/4, AGENTS_NUMBER/2, sf::Color(255,255,255));
-    Swarm Swarm_2 = Swarm(windowWidth/4, windowHeight/4, AGENTS_NUMBER/2, sf::Color(255,1,1));
+    Swarm Swarm_2 = Swarm(windowWidth/4, windowHeight/4, AGENTS_NUMBER/2, sf::Color(1,255,1));
 
     while (window.isOpen())
     {
@@ -272,6 +291,5 @@ float getAvAreaValue(sf::Image& image, int x, int y, int a, sf::Color favColor){
             }
         }
     }
-
-    return avg/pow(a,2);
+    return avg;
 }
