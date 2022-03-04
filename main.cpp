@@ -19,9 +19,16 @@ const double SENSOR_ANGLE = M_PI/4;
 const int EDGE_L = windowHeight*0.01;
 const double TURN_ANGLE = M_PI/8;
 const float TURN_RAND = 1;
-const float EVAPO_RATE = 1;
+const float EVAPO_RATE = 0.997;
 
 const sf::Color COLOR_WHITE(255,255,255);
+const sf::Color COLOR_BLUE(1,1,255);
+const sf::Color COLOR_RED(255,1,1);
+const sf::Color COLOR_GREEN(1,255,1);
+
+// const sf::Color COLOR_BLUE(76,168,248);
+// const sf::Color COLOR_RED(239,71,111);
+// const sf::Color COLOR_GREEN(255,209,102);
 
 static std::default_random_engine e;
 static std::uniform_real_distribution<> dis(0, 1);
@@ -202,9 +209,9 @@ int main()
     sf::Image MImage;
     MImage.create(windowWidth, windowHeight);
 
-    Swarm Swarm_1 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/2, sf::Color(1,255,1), windowHeight/6);
-    Swarm Swarm_2 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/2, sf::Color(1,1,255), windowHeight/4);
-    Swarm Swarm_3 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/2, sf::Color(255,1,1), windowHeight/2 - 50);
+    Swarm Swarm_1 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/2, COLOR_GREEN, windowHeight/6);
+    Swarm Swarm_2 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/2, COLOR_BLUE, windowHeight/4);
+    Swarm Swarm_3 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/2, COLOR_RED, windowHeight/2 - 50);
 
     while (window.isOpen())
     {
@@ -224,9 +231,6 @@ int main()
         S1.join();
         S2.join();
         S3.join();
-
-        //Swarm_1.act(MImage);
-        //Swarm_2.act(MImage);
         
         sf::Texture MTexture;
         MTexture.loadFromImage(MImage); 
@@ -274,7 +278,7 @@ void evaporateImage(sf::Image& img){
             sf::Color c = img.getPixel(i,j);
             if (c != sf::Color(0,0,0))
             {
-                c = sf::Color(c.r - (c.r >= EVAPO_RATE) * EVAPO_RATE, c.g - (c.g >= EVAPO_RATE) * EVAPO_RATE, c.b - (c.b >= EVAPO_RATE) * EVAPO_RATE);
+                c = sf::Color(int(c.r*EVAPO_RATE),int(c.g*EVAPO_RATE),int(c.b*EVAPO_RATE));
                 img.setPixel(i,j,c);
             }
         }
