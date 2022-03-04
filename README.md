@@ -13,6 +13,13 @@ Makefile works only for linux because i am lazy, however, should compile in wind
 
 `make install-dependencies && make run` - yup, that's it
 
+## How to use
 Simulation settings can be found at the top of the `main.cpp` file
 
-Yes, you have to rebuild it after every change (`make run` does that)
+Yes, you have to rebuild it after every change ( `make run` does that )
+
+Spawning patterns are controlled in a `Swarm` class initialisation, colors are passed at the particular swarm initialisatiion 
+
+^ this might be changed later
+
+Good luck if you will use it!
