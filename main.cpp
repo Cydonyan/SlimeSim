@@ -11,7 +11,7 @@
 const int windowWidth = 1920, windowHeight = 1080;
 const int AGENTS_NUMBER = 30000;
 const int AGENT_SPEED = 1;
-const int SENSOR_LENGTH = 6; // MUST be greater than SENSOR_SIZE
+const int SENSOR_LENGTH = 7; // MUST be greater than SENSOR_SIZE
 const int SENSOR_SIZE = 2; //MUST be even
 const double SENSOR_ANGLE = M_PI/4;
 const int EDGE_L = windowHeight*0.01;
@@ -19,14 +19,18 @@ const double TURN_ANGLE = M_PI/8;
 const float TURN_RAND = 0;
 const float EVAPO_RATE = 0.997;
 
-const sf::Color COLOR_WHITE(255,255,255);
+
+//======Classic colors===================
 const sf::Color COLOR_BLUE(1,1,255);
 const sf::Color COLOR_RED(255,1,1);
 const sf::Color COLOR_GREEN(1,255,1);
+const sf::Color BG_COLOR(0,0,0);
 
-// const sf::Color COLOR_BLUE(76,168,248);
-// const sf::Color COLOR_RED(239,71,111);
-// const sf::Color COLOR_GREEN(255,209,102);
+//======Moss colors======================
+// const sf::Color COLOR_BLUE(1,200,1);
+// const sf::Color COLOR_RED(1,200,1);
+// const sf::Color COLOR_GREEN(1,200,1);
+// const sf::Color BG_COLOR(76,76,76);
 
 static std::default_random_engine e;
 static std::uniform_real_distribution<> dis(0, 1);
@@ -37,7 +41,7 @@ void setPixels(sf::Image& image, std::vector<std::vector<int>>& buffer, sf::Colo
 
 void evaporateImage(sf::Image& img);
 
-float getAvAreaValue(sf::Image& image, int x, int y, int a,  sf::Color favColor = COLOR_WHITE);
+float getAvAreaValue(sf::Image& image, int x, int y, int a,  sf::Color favColor = BG_COLOR);
 
 
 class Agent 
@@ -198,15 +202,15 @@ int main()
     time_t start;
     double alltime = 0;
 
-    sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "ITS ALIIIIVE!"); //sf::Style::Fullscreen
+    sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "ITS ALIIIIVE!",sf::Style::Fullscreen); //sf::Style::Fullscreen
     std::vector<Agent> agents;
     
     sf::Image MImage;
-    MImage.create(windowWidth, windowHeight);
+    MImage.create(windowWidth, windowHeight, BG_COLOR);
 
-    Swarm Swarm_1 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/3, COLOR_GREEN, windowHeight/6);
-    Swarm Swarm_2 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/3, COLOR_BLUE, windowHeight/4);
-    Swarm Swarm_3 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/3, COLOR_RED, windowHeight/2 - 50);
+    Swarm Swarm_1 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/3, COLOR_GREEN, windowHeight/4);
+    Swarm Swarm_2 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/3, COLOR_BLUE, windowHeight/3);
+    Swarm Swarm_3 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/3, COLOR_RED, windowHeight/1.5 - 50);
 
     while (window.isOpen())
     {
@@ -263,9 +267,9 @@ void evaporateImage(sf::Image& img){
         for (int j = 1; j < img.getSize().y - 1; j++)
         {
             sf::Color c = img.getPixel(i,j);
-            if (c != sf::Color(0,0,0))
+            if (c != BG_COLOR)
             {
-                c = sf::Color(int(c.r*EVAPO_RATE),int(c.g*EVAPO_RATE),int(c.b*EVAPO_RATE));
+                c = sf::Color(int(c.r*EVAPO_RATE + BG_COLOR.r*(1-EVAPO_RATE)),int(c.g*EVAPO_RATE + BG_COLOR.g*(1-EVAPO_RATE)),int(c.b*EVAPO_RATE + BG_COLOR.b*(1-EVAPO_RATE)));
                 img.setPixel(i,j,c);
             }
         }
@@ -277,7 +281,7 @@ float getAvAreaValue(sf::Image& image, int x, int y, int a, sf::Color favColor){
     for (int i = -a/2; i <= a/2; i++){
         for (int j = -a/2; j <= a/2; j++){
             sf::Color colr = image.getPixel(x + i, y + j);
-            if (colr.r + colr.g + colr.b != 0)
+            if (colr != BG_COLOR)
             {
                 if ((colr.r / favColor.r == colr.g / favColor.g) && (colr.r / favColor.r == colr.b / favColor.b) && (colr.g / favColor.g == colr.b / favColor.b))
             {
