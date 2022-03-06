@@ -1,16 +1,15 @@
 #include <SFML/Graphics.hpp>
-#include <cmath>
+#include <math.h>
 #include <iostream>
 #include <vector>
 #include <random>
-#include <execution>
-#include <thread>
+#include <time.h>
 #define _USE_MATH_DEFINES
 
 // Preferences and prepaconstrations
 
 const int windowWidth = 1920, windowHeight = 1080;
-const int AGENTS_NUMBER = 50000;
+const int AGENTS_NUMBER = 30000;
 const int AGENT_SPEED = 1;
 const int SENSOR_LENGTH = 6; // MUST be greater than SENSOR_SIZE
 const int SENSOR_SIZE = 2; //MUST be even
@@ -37,8 +36,6 @@ float randomValue(float min = -1, float max = 1, bool allowMiddle = false );
 void setPixels(sf::Image& image, std::vector<std::vector<int>>& buffer, sf::Color color);
 
 void evaporateImage(sf::Image& img);
-
-sf::Color getPixelColor(sf::Image& image, int x, int y);
 
 float getAvAreaValue(sf::Image& image, int x, int y, int a,  sf::Color favColor = COLOR_WHITE);
 
@@ -185,15 +182,12 @@ class Swarm
     void act(sf::Image& img)
     {
         std::vector<std::vector<int>> PixelBuffer;
-        std::for_each(std::execution::par, agents.begin(), agents.end(), [&](Agent& agent)
+        std::for_each( agents.begin(), agents.end(), [&](Agent& agent)
         {
             agent.search(img,swarmColor);
             agent.move(windowWidth,windowHeight);
-            PixelBuffer.push_back({((int) agent.x), ((int) agent.y)});
+            img.setPixel(agent.x, agent.y, swarmColor);
         });
-
-        setPixels(img, PixelBuffer, swarmColor);
-
     }
     
 };
@@ -201,6 +195,8 @@ class Swarm
 int main()
 {
     int itercounter = 0;
+    time_t start;
+    double alltime = 0;
 
     sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "ITS ALIIIIVE!"); //sf::Style::Fullscreen
     std::vector<Agent> agents;
@@ -208,9 +204,9 @@ int main()
     sf::Image MImage;
     MImage.create(windowWidth, windowHeight);
 
-    Swarm Swarm_1 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/2, COLOR_GREEN, windowHeight/6);
-    Swarm Swarm_2 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/2, COLOR_BLUE, windowHeight/4);
-    Swarm Swarm_3 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/2, COLOR_RED, windowHeight/2 - 50);
+    Swarm Swarm_1 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/3, COLOR_GREEN, windowHeight/6);
+    Swarm Swarm_2 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/3, COLOR_BLUE, windowHeight/4);
+    Swarm Swarm_3 = Swarm(windowWidth/2, windowHeight/2, AGENTS_NUMBER/3, COLOR_RED, windowHeight/2 - 50);
 
     while (window.isOpen())
     {
@@ -218,24 +214,28 @@ int main()
         while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
+            {
+                std:: cout << "Average IPS: " << alltime/itercounter << "\n";
                 window.close();
+            }
         }
 
         window.clear();
         evaporateImage(MImage);
-        
-        std::thread S1(&Swarm::act, &Swarm_1, std::ref(MImage));
-        std::thread S2(&Swarm::act, &Swarm_2, std::ref(MImage));
-        std::thread S3(&Swarm::act, &Swarm_3, std::ref(MImage));
-        S1.join();
-        S2.join();
-        S3.join();
-        
+
+        start = std::clock();
+
+        Swarm_1.act(MImage);
+        Swarm_2.act(MImage);
+        Swarm_3.act(MImage);
+
         sf::Texture MTexture;
         MTexture.loadFromImage(MImage); 
         sf::Sprite sprite(MTexture);
         window.draw(sprite);
         window.display();
+
+        alltime += (double) CLOCKS_PER_SEC / (std::clock() - start);
         itercounter++;
     }
 
@@ -257,18 +257,6 @@ float randomValue(float min, float max, bool allowMiddle)
     return rcoef*(max - min) + min;
 }
 
-void setPixels(sf::Image& image, std::vector<std::vector<int>>& buffer, sf::Color color){
-    std::for_each(std::execution::par, buffer.begin(), buffer.end(), [&](auto& pixl)
-        {
-            if ((pixl.at(0) < image.getSize().x) && (pixl.at(0) > 0) && (pixl.at(1) < image.getSize().y) && (pixl.at(1) > 0))
-            {
-                image.setPixel(pixl.at(0), pixl.at(1), color);
-            }
-        });
-
-    buffer.clear();
-} 
-
 void evaporateImage(sf::Image& img){
     for (int i = 1; i < img.getSize().x - 1; i++)
     {
@@ -284,22 +272,11 @@ void evaporateImage(sf::Image& img){
     }
 }
 
-sf::Color getPixelColor(sf::Image& image, int x, int y){
-    if ((x < image.getSize().x) && (x > 0) && (y < image.getSize().y) && y > 0)
-    {
-        return image.getPixel(x,y);
-    }
-    else
-    {
-        return sf::Color(0,0,0);
-    }
-}
-
 float getAvAreaValue(sf::Image& image, int x, int y, int a, sf::Color favColor){
     int avg = 0;
     for (int i = -a/2; i <= a/2; i++){
         for (int j = -a/2; j <= a/2; j++){
-            sf::Color colr = getPixelColor(image, x + i, y + j);
+            sf::Color colr = image.getPixel(x + i, y + j);
             if (colr.r + colr.g + colr.b != 0)
             {
                 if ((colr.r / favColor.r == colr.g / favColor.g) && (colr.r / favColor.r == colr.b / favColor.b) && (colr.g / favColor.g == colr.b / favColor.b))
