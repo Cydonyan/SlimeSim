@@ -2,7 +2,7 @@
 
 ![Cover](Pictures/pic1.png)
 ### Note: no gpu acceleration whatsoever, everything goes on a cpu <sup><sub>it's pretty fast though</sub></sup>
-
+[video demonstration here](https://youtu.be/Vveza4lrUTM)
 
 Personal fun project which was inspired by Sebastian Lague's beautiful [video](https://youtu.be/kzwT3wQWAHE), but became some digital-acid-for-eyes instead
 
